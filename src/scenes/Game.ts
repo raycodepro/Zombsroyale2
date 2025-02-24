@@ -7,14 +7,16 @@ platforms: Phaser.Physics.Arcade.StaticGroup;
 player: Phaser.Types.Physics.Arcade.SpriteWithDynamicBody;
 cursors: Phaser.Types.Input.Keyboard.CursorKeys;
     stars: Phaser.Physics.Arcade.Group;
+    bombs: Phaser.Physics.Arcade.Group;
     score = 0;
     scoreText: any;
-    
+    gameOver = false;
     
     constructor ()
    
     {
         super('Game');
+        
     }
     
     preload ()
@@ -27,6 +29,7 @@ cursors: Phaser.Types.Input.Keyboard.CursorKeys;
             'assets/dude.png',
             { frameWidth: 32, frameHeight: 48 }
         );
+        
         
     }
     
@@ -61,7 +64,10 @@ cursors: Phaser.Types.Input.Keyboard.CursorKeys;
             frameRate: 10,
             repeat: -1
         });
-        this.physics.add.collider(this.player, this.platforms);
+        this.stars.children.iterate( (star: any) => {
+
+            star.setBounceY(Phaser.Math.FloatBetween(0.4, 0.8));
+            return null});
         
         this.anims.create({
             key: 'turn',
@@ -75,13 +81,21 @@ cursors: Phaser.Types.Input.Keyboard.CursorKeys;
             frameRate: 10,
             repeat: -1
         });
-        this.stars.children.iterate( (star: any) => {
-
-            star.setBounceY(Phaser.Math.FloatBetween(0.4, 0.8));
-            return null;
         
-        });
+        
+        
+        this.bombs = this.physics.add.group()
         this.physics.add.collider(this.stars, this.platforms);
+        this.physics.add.collider(this.bombs, this.platforms);
+        this.physics.add.collider(this.player, this.platforms);
+        this.physics.add.collider(this.player, this.bombs, (player: any, bomb: any)=> {
+            this.physics.pause();
+            player.setTint(0xff0000);
+            player.anims.play('turn');
+            this.gameOver = true;
+        })
+        
+        
         this.physics.add.overlap(
             this.player, this.stars, (player: any, star: any) => {star.disableBody(true,true);
                 this.score += 1;
@@ -89,6 +103,12 @@ cursors: Phaser.Types.Input.Keyboard.CursorKeys;
 
              },
             undefined, this
+            
+        
+          
+
+            
+
     );
     this.scoreText = this.add.text(16, 16, 'score: 0', { fontSize: '32px', fill: '#000' });
    
